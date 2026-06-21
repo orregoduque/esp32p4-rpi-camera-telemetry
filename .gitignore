@@ -1,0 +1,31 @@
+# ESP-IDF build artifacts
+build/
+sdkconfig
+sdkconfig.old
+*.bin
+*.elf
+*.map
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Receiver output
+received_packets/
+
+# Secrets (override PSK locally)
+sdkconfig.local
+.env

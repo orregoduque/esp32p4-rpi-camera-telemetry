@@ -1,0 +1,56 @@
+menu "Raspberry Pi Camera"
+
+    config RPI_TCP_SERVER_IP
+        string "TCP receiver IPv4"
+        default "192.168.1.10"
+        help
+            Receiver host IPv4 address for telemetry upload.
+
+    config RPI_TCP_SERVER_PORT
+        int "TCP receiver port"
+        range 1 65535
+        default 9000
+        help
+            Receiver listening TCP port.
+
+    config RPI_NODE_ID
+        int "Node ID"
+        range 1 65535
+        default 1
+        help
+            Unique node identifier used by receiver to sort data.
+
+    config RPI_ETH_USE_STATIC_IP
+        bool "Use static IPv4 on Ethernet"
+        default y
+        help
+            Enable for a direct PC cable (no DHCP server). Disable on a network
+            that assigns addresses via DHCP.
+
+    config RPI_ETH_STATIC_IP
+        string "ESP Ethernet IPv4"
+        depends on RPI_ETH_USE_STATIC_IP
+        default "192.168.1.20"
+        help
+            Static address for this board. Must be on the same subnet as the PC.
+
+    config RPI_ETH_STATIC_GW
+        string "Ethernet gateway IPv4"
+        depends on RPI_ETH_USE_STATIC_IP
+        default "192.168.1.10"
+        help
+            Usually the PC running tcp_receiver.py (same as TCP receiver IP).
+
+    config RPI_ETH_STATIC_NETMASK
+        string "Ethernet netmask"
+        depends on RPI_ETH_USE_STATIC_IP
+        default "255.255.255.0"
+
+    config RPI_CTRL_TCP_PORT
+        int "Master control TCP port (slave listens)"
+        range 1 65535
+        default 9001
+        help
+            Port on which the ESP slave listens for master commands.
+
+endmenu
