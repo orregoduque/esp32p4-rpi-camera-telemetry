@@ -169,8 +169,11 @@ static void camera_task(void *arg)
         }
 
         if (!s_cam.pipeline_ready) {
-            if (rpi_camera_control_wait_for_start(-1) != ESP_OK) {
-                continue;
+            while (rpi_camera_control_wait_for_start(1000) != ESP_OK) {
+                rpi_camera_health_feed();
+                if (rpi_camera_control_take_restart()) {
+                    esp_restart();
+                }
             }
             if (camera_pipeline_init() != ESP_OK) {
                 ESP_LOGE(TAG, "camera init failed");

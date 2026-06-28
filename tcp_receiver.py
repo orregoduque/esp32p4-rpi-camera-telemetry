@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 """
+ethernet on pc: 192.168.1.10
+subnet mask: 255.255.255.0
+
+python tcp_receiver.py --psk "CHANGE_ME_TO_RANDOM_32PLUS_BYTES" --client-timeout 30
+
+
 TCP receiver for ESP32-P4 camera telemetry packets.
 
 Features:

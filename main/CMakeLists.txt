@@ -13,7 +13,7 @@ idf_component_register(SRCS "rpi_camera_ctrl_server.c" "rpi_camera_control.c" "r
 #idf.py -D "SDKCONFIG_DEFAULTS=sdkconfig.defaults;sdkconfig.defaults.pre_v3" erase-flash
 
 #idf.py -D "SDKCONFIG_DEFAULTS=sdkconfig.defaults;sdkconfig.defaults.pre_v3" build flash monitor
-
+#idf.py -p COM5 monitor
 
 #IP: 192.168.1.10
 #Mask: 255.255.255.0
