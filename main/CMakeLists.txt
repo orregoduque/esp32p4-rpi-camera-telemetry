@@ -9,11 +9,20 @@ idf_component_register(SRCS "rpi_camera_ctrl_server.c" "rpi_camera_control.c" "r
 
 #cd C:\Users\orreg\Documents\ESP\04_freertos_tasks
 
-#full flash erase
+# --- Slave 1 (node 1, IP 192.168.1.20) — default ---
+#idf.py -D "SDKCONFIG_DEFAULTS=sdkconfig.defaults;sdkconfig.defaults.pre_v3" build flash monitor
+
+# --- Slave 2 (node 2, IP 192.168.1.21) — second board ---
+# Remove sdkconfig when switching slaves so Kconfig picks up the new overlay:
+#   Remove-Item sdkconfig -ErrorAction SilentlyContinue
+#idf.py -D "SDKCONFIG_DEFAULTS=sdkconfig.defaults;sdkconfig.defaults.pre_v3;sdkconfig.defaults.slave2" build flash monitor
+
+#full flash erase (first spool partition or partition table change)
 #idf.py -D "SDKCONFIG_DEFAULTS=sdkconfig.defaults;sdkconfig.defaults.pre_v3" erase-flash
 
-#idf.py -D "SDKCONFIG_DEFAULTS=sdkconfig.defaults;sdkconfig.defaults.pre_v3" build flash monitor
 #idf.py -p COM5 monitor
 
-#IP: 192.168.1.10
-#Mask: 255.255.255.0
+# PC Ethernet: 192.168.1.10 / 255.255.255.0
+# Slave 1:      192.168.1.20   python tcp_master.py --host 192.168.1.20 start
+# Slave 2:      192.168.1.21   python tcp_master.py --host 192.168.1.21 start
+# Receiver (both nodes): python tcp_receiver.py --psk "..." --client-timeout 30
