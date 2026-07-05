@@ -76,6 +76,14 @@
 #define RPI_CTRL_TCP_PORT                CONFIG_RPI_CTRL_TCP_PORT
 #endif
 
+/** Ethernet OTA (first flash via USB; updates on this port) */
+#define RPI_OTA_TCP_PORT                 3232
+
+#ifdef CONFIG_RPI_OTA_TCP_PORT
+#undef RPI_OTA_TCP_PORT
+#define RPI_OTA_TCP_PORT                 CONFIG_RPI_OTA_TCP_PORT
+#endif
+
 /** Local spool (FAT on flash) when TCP upload fails */
 #define RPI_SPOOL_MOUNT_POINT            "/spool"
 #define RPI_SPOOL_MAX_FILES              24

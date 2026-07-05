@@ -35,9 +35,14 @@ CONFIG_LWIP_UDP_RECVMBOX_SIZE=64
 CONFIG_LWIP_TCPIP_RECVMBOX_SIZE=64
 CONFIG_LWIP_TCP_SACK_OUT=y
 
-# Custom partition table (8 MB FAT spool for failed TCP packets)
+# Custom partition table (OTA dual-slot + 8 MB FAT spool)
 CONFIG_PARTITION_TABLE_CUSTOM=y
 CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+
+# Ethernet OTA (first flash always via USB; re-flash over TCP port 3232)
+CONFIG_RPI_OTA_TCP_PORT=3232
+CONFIG_RPI_OTA_REBOOT_DELAY_MS=500
+# CONFIG_RPI_OTA_REQUIRE_VERSION_INCREMENT is not set
 
 # Task watchdog — main loop must feed within timeout
 CONFIG_ESP_TASK_WDT_EN=y

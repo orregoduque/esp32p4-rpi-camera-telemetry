@@ -42,6 +42,7 @@ static const char *state_name(rpi_slave_state_t state)
     case RPI_STATE_SPOOL_BACKLOG: return "SPOOL_BACKLOG";
     case RPI_STATE_FAULT:         return "FAULT";
     case RPI_STATE_RESTARTING:    return "RESTARTING";
+    case RPI_STATE_OTA:           return "OTA";
     default:                      return "UNKNOWN";
     }
 }
@@ -162,7 +163,9 @@ uint32_t rpi_camera_control_handle_command(uint32_t cmd_id, uint16_t command, rp
         break;
 
     case RPI_CTRL_CMD_STOP:
-        if (state == RPI_STATE_RUNNING || state == RPI_STATE_WARMUP || state == RPI_STATE_SPOOL_BACKLOG
+        if (state == RPI_STATE_OTA) {
+            rpi_camera_control_set_state(RPI_STATE_PAUSED);
+        } else if (state == RPI_STATE_RUNNING || state == RPI_STATE_WARMUP || state == RPI_STATE_SPOOL_BACKLOG
                 || state == RPI_STATE_CAM_INIT) {
             rpi_camera_control_set_state(RPI_STATE_PAUSED);
         } else if (state != RPI_STATE_PAUSED && state != RPI_STATE_IDLE) {
@@ -175,6 +178,14 @@ uint32_t rpi_camera_control_handle_command(uint32_t cmd_id, uint16_t command, rp
         if (xSemaphoreTake(s_state_lock, portMAX_DELAY) == pdTRUE) {
             s_restart_pending = true;
             xSemaphoreGive(s_state_lock);
+        }
+        break;
+
+    case RPI_CTRL_CMD_OTA:
+        if (state == RPI_STATE_NET_INIT || state == RPI_STATE_FAULT || state == RPI_STATE_RESTARTING) {
+            status = RPI_CTRL_STATUS_INVALID_STATE;
+        } else {
+            rpi_camera_control_set_state(RPI_STATE_OTA);
         }
         break;
 

@@ -31,6 +31,7 @@
 #include "rpi_camera_ctrl_server.h"
 #include "rpi_camera_health.h"
 #include "rpi_camera_net.h"
+#include "rpi_camera_ota.h"
 #include "rpi_camera_tcp.h"
 
 static const char *TAG = "rpi_camera";
@@ -168,6 +169,12 @@ static void camera_task(void *arg)
             esp_restart();
         }
 
+        if (rpi_camera_control_get_state() == RPI_STATE_OTA) {
+            rpi_camera_health_feed();
+            vTaskDelay(pdMS_TO_TICKS(500));
+            continue;
+        }
+
         if (!s_cam.pipeline_ready) {
             while (rpi_camera_control_wait_for_start(1000) != ESP_OK) {
                 rpi_camera_health_feed();
@@ -248,6 +255,7 @@ void app_main(void)
     printf("========================================\n");
     printf(" Raspberry Pi Camera — SLAVE node\n");
     printf(" Control: master -> TCP :%d\n", RPI_CTRL_TCP_PORT);
+    printf(" OTA:       TCP :%d (after first USB flash)\n", RPI_OTA_TCP_PORT);
     printf(" Telemetry: -> %s:%d every %d s\n", RPI_TCP_SERVER_IP, RPI_TCP_SERVER_PORT, RPI_SNAPSHOT_INTERVAL_SEC);
     printf(" Camera: %dx%d\n", RPI_CAM_HRES, RPI_CAM_VRES);
     printf("========================================\n\n");
@@ -267,6 +275,7 @@ void app_main(void)
     ESP_ERROR_CHECK(rpi_camera_health_init());
     ESP_ERROR_CHECK(rpi_camera_health_register_current_task());
     ESP_ERROR_CHECK(rpi_camera_ctrl_server_start());
+    ESP_ERROR_CHECK(rpi_camera_ota_start());
 
     rpi_camera_control_set_state(RPI_STATE_IDLE);
     ESP_LOGI(TAG, "slave IDLE on %s — send START from master (tcp_master.py)", rpi_camera_net_get_ip_str());

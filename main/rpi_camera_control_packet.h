@@ -19,6 +19,7 @@
 #define RPI_CTRL_CMD_START       2U
 #define RPI_CTRL_CMD_STOP        3U
 #define RPI_CTRL_CMD_RESTART     4U
+#define RPI_CTRL_CMD_OTA         5U
 
 #define RPI_CTRL_STATUS_OK       0U
 #define RPI_CTRL_STATUS_BAD_MAGIC    1U
@@ -38,6 +39,7 @@ typedef enum {
     RPI_STATE_SPOOL_BACKLOG,
     RPI_STATE_FAULT,
     RPI_STATE_RESTARTING,
+    RPI_STATE_OTA,
 } rpi_slave_state_t;
 
 typedef struct __attribute__((packed)) {

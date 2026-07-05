@@ -53,4 +53,24 @@ menu "Raspberry Pi Camera"
         help
             Port on which the ESP slave listens for master commands.
 
+    config RPI_OTA_TCP_PORT
+        int "Ethernet OTA TCP port (slave listens)"
+        range 1 65535
+        default 3232
+        help
+            Port for uploading a new app .bin after the first USB flash.
+            Used by: python tcp_master.py --host <ip> ota
+
+    config RPI_OTA_REBOOT_DELAY_MS
+        int "Delay before reboot after successful OTA (ms)"
+        range 100 10000
+        default 500
+
+    config RPI_OTA_REQUIRE_VERSION_INCREMENT
+        bool "Reject OTA image with same app version as running firmware"
+        default n
+        help
+            When enabled, esp_app_desc.version in the uploaded image must differ
+            from the currently running firmware.
+
 endmenu
