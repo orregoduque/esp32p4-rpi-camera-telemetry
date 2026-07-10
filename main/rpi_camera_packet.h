@@ -10,6 +10,9 @@
 #define RPI_PKT_VERSION          1U
 #define RPI_PKT_HMAC_SIZE        32U
 
+#define RPI_PKT_PAYLOAD_VISIBLE  0U
+#define RPI_PKT_PAYLOAD_THERMAL  1U
+
 typedef struct __attribute__((packed)) {
     uint32_t magic;
     uint16_t version;

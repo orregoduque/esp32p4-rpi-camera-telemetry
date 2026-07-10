@@ -25,7 +25,7 @@
 #define RPI_CAM_RGB565_BPP               16
 #define RPI_CAM_FRAME_BYTES              (RPI_CAM_HRES * RPI_CAM_VRES * RPI_CAM_RGB565_BPP / 8)
 
-/** How often a new photo is captured and sent over TCP */
+/** Snapshot interval — alternates visible then thermal (no shared I2C during capture). */
 #define RPI_SNAPSHOT_INTERVAL_SEC        10
 
 /** Let the sensor/ISP settle before the first snapshot (AE needs a few frames) */
@@ -33,6 +33,25 @@
 
 /** ISP brightness boost (-128..127, 0 = neutral) */
 #define RPI_ISP_BRIGHTNESS               80
+
+/**
+ * MLX90640 thermal camera (Seengreat / I2C module) — shares the board I2C bus with OV5647.
+ * Waveshare ESP32-P4-Module-DEV-KIT default I2C: SDA=GPIO7, SCL=GPIO8 (SH1.0 4-pin header).
+ *   GND -> GND
+ *   VCC -> 3.3V (not 5V)
+ *   SDA -> GPIO 7
+ *   SCL -> GPIO 8
+ * I2C address: 0x33
+ */
+#define RPI_THERMAL_I2C_ADDR             0x33
+#define RPI_THERMAL_REFRESH_HZ           2
+/** Pause OV5647 MIPI/CSI before MLX90640 uses the shared SCCB bus. */
+#define RPI_THERMAL_BUS_SETTLE_MS        200
+#define RPI_THERMAL_COLS                 32
+#define RPI_THERMAL_ROWS                 24
+#define RPI_THERMAL_JPEG_W               320
+#define RPI_THERMAL_JPEG_H               240
+#define RPI_THERMAL_RGB565_BYTES         (RPI_THERMAL_JPEG_W * RPI_THERMAL_JPEG_H * 2)
 
 /** Direct-cable Ethernet (disable static IP if you use DHCP on a switch) */
 #ifndef CONFIG_RPI_ETH_USE_STATIC_IP

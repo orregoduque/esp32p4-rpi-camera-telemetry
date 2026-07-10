@@ -26,6 +26,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "rpi_camera_config.h"
+#include "rpi_camera_health.h"
 #include "rpi_camera_net.h"
 #include "rpi_camera_packet.h"
 #include "rpi_camera_spool.h"
@@ -255,6 +256,7 @@ esp_err_t rpi_camera_tcp_maintain_connection(void)
 static bool send_packet_raw(const uint8_t *pkt, size_t len, uint32_t seq)
 {
     for (int attempt = 1; attempt <= RPI_TCP_MAX_RETRIES; ++attempt) {
+        rpi_camera_health_feed();
         if (connect_socket() != ESP_OK) {
             vTaskDelay(pdMS_TO_TICKS(500));
             continue;
@@ -400,13 +402,15 @@ bool rpi_camera_tcp_is_connected(void)
     return s_sock >= 0;
 }
 
-esp_err_t rpi_camera_tcp_send_snapshot(const void *rgb565, size_t rgb_len, uint32_t node_id, int16_t temperature_centi_c)
+static esp_err_t send_jpeg_packet(const void *rgb565, size_t rgb_len, uint16_t width, uint16_t height,
+                                    uint32_t node_id, int16_t temperature_centi_c, uint16_t payload_type)
 {
-    ESP_RETURN_ON_FALSE(rgb565 && rgb_len == RPI_CAM_FRAME_BYTES, ESP_ERR_INVALID_ARG, TAG, "invalid RGB frame");
+    ESP_RETURN_ON_FALSE(rgb565 && rgb_len > 0, ESP_ERR_INVALID_ARG, TAG, "invalid RGB frame");
 
+    rpi_camera_health_feed();
     jpeg_encode_cfg_t cfg = {
-        .width = RPI_CAM_HRES,
-        .height = RPI_CAM_VRES,
+        .width = width,
+        .height = height,
         .src_type = JPEG_ENCODE_IN_FORMAT_RGB565,
         .sub_sample = JPEG_DOWN_SAMPLING_YUV420,
         .image_quality = 85,
@@ -428,7 +432,7 @@ esp_err_t rpi_camera_tcp_send_snapshot(const void *rgb565, size_t rgb_len, uint3
         .sequence = htonl(++s_sequence),
         .timestamp_ms = htonll((uint64_t)(esp_timer_get_time() / 1000)),
         .temperature_centi_c = htons((uint16_t)temperature_centi_c),
-        .reserved = 0,
+        .reserved = htons(payload_type),
         .jpeg_size = htonl(jpeg_len),
         .jpeg_crc32 = htonl(esp_crc32_le(0, s_jpeg_buf, jpeg_len)),
     };
@@ -438,21 +442,36 @@ esp_err_t rpi_camera_tcp_send_snapshot(const void *rgb565, size_t rgb_len, uint3
     memcpy(s_pkt_buf, &header, sizeof(header));
     memcpy(s_pkt_buf + sizeof(header), s_jpeg_buf, jpeg_len);
 
+    const char *kind = (payload_type == RPI_PKT_PAYLOAD_THERMAL) ? "thermal" : "visible";
     if (send_packet_raw(s_pkt_buf, total_len, s_sequence)) {
-        ESP_LOGI(TAG, "sent seq=%" PRIu32 " node=%" PRIu32 " temp=%.2fC jpg=%" PRIu32 "B",
-                 s_sequence, node_id, temperature_centi_c / 100.0f, jpeg_len);
+        ESP_LOGI(TAG, "sent %s seq=%" PRIu32 " node=%" PRIu32 " temp=%.2fC jpg=%" PRIu32 "B",
+                 kind, s_sequence, node_id, temperature_centi_c / 100.0f, jpeg_len);
         return ESP_OK;
     }
 
     if (rpi_camera_spool_store(s_pkt_buf, total_len, s_sequence) == ESP_OK) {
         record_send_failure();
-        ESP_LOGW(TAG, "TCP failed — seq=%" PRIu32 " saved to spool (%u pending)",
-                 s_sequence, (unsigned)rpi_camera_spool_pending_count());
+        ESP_LOGW(TAG, "TCP failed — %s seq=%" PRIu32 " saved to spool (%u pending)",
+                 kind, s_sequence, (unsigned)rpi_camera_spool_pending_count());
         return ESP_ERR_NOT_FINISHED;
     }
 
     s_sequence--;
     record_send_failure();
-    ESP_LOGE(TAG, "TCP and spool failed — seq=%" PRIu32 " lost", s_sequence + 1);
+    ESP_LOGE(TAG, "TCP and spool failed — %s seq=%" PRIu32 " lost", kind, s_sequence + 1);
     return ESP_FAIL;
+}
+
+esp_err_t rpi_camera_tcp_send_snapshot(const void *rgb565, size_t rgb_len, uint32_t node_id, int16_t temperature_centi_c)
+{
+    ESP_RETURN_ON_FALSE(rgb_len == RPI_CAM_FRAME_BYTES, ESP_ERR_INVALID_ARG, TAG, "invalid visible frame");
+    return send_jpeg_packet(rgb565, rgb_len, RPI_CAM_HRES, RPI_CAM_VRES, node_id, temperature_centi_c,
+                            RPI_PKT_PAYLOAD_VISIBLE);
+}
+
+esp_err_t rpi_camera_tcp_send_thermal(const void *rgb565, size_t rgb_len, uint32_t node_id, int16_t temperature_centi_c)
+{
+    ESP_RETURN_ON_FALSE(rgb_len == RPI_THERMAL_RGB565_BYTES, ESP_ERR_INVALID_ARG, TAG, "invalid thermal frame");
+    return send_jpeg_packet(rgb565, rgb_len, RPI_THERMAL_JPEG_W, RPI_THERMAL_JPEG_H, node_id, temperature_centi_c,
+                            RPI_PKT_PAYLOAD_THERMAL);
 }

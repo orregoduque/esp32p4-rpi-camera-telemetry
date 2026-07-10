@@ -67,6 +67,9 @@ STATUS_BAD_CRC = 5
 STATUS_BAD_HMAC = 6
 STATUS_INTERNAL_ERROR = 7
 
+RPI_PKT_PAYLOAD_VISIBLE = 0
+RPI_PKT_PAYLOAD_THERMAL = 1
+
 STATUS_LABELS = {
     STATUS_OK: "OK",
     STATUS_BAD_MAGIC: "BAD_MAGIC",
@@ -270,7 +273,7 @@ def handle_client(
                 sequence,
                 timestamp_ms,
                 temp_centi_c,
-                0,
+                _reserved,
                 jpeg_size,
                 jpeg_crc32,
                 b"\x00" * HMAC_SIZE,
@@ -286,10 +289,15 @@ def handle_client(
             node_dir = out_dir / f"node_{node_id}"
             node_dir.mkdir(parents=True, exist_ok=True)
 
-            latest_jpg = node_dir / "latest.jpg"
-            latest_meta = node_dir / "latest.json"
-            archive_jpg = node_dir / f"seq_{sequence}.jpg"
-            archive_meta = node_dir / f"seq_{sequence}.json"
+            payload_type = _reserved
+            is_thermal = payload_type == RPI_PKT_PAYLOAD_THERMAL
+            kind = "thermal" if is_thermal else "visible"
+            suffix = "_thermal" if is_thermal else ""
+
+            latest_jpg = node_dir / f"latest{suffix}.jpg"
+            latest_meta = node_dir / f"latest{suffix}.json"
+            archive_jpg = node_dir / f"seq_{sequence}{suffix}.jpg"
+            archive_meta = node_dir / f"seq_{sequence}{suffix}.json"
 
             ts_iso = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(timestamp_ms / 1000.0))
             temperature_c = temp_centi_c / 100.0
@@ -297,6 +305,8 @@ def handle_client(
             metadata = {
                 "node_id": node_id,
                 "sequence": sequence,
+                "payload_type": payload_type,
+                "kind": kind,
                 "timestamp_ms": timestamp_ms,
                 "timestamp_iso_utc": ts_iso,
                 "temperature_c": temperature_c,
@@ -315,7 +325,7 @@ def handle_client(
             send_ack(sock, sequence, STATUS_OK)
             diag.note(STATUS_OK, node_id=node_id, seq=sequence, nbytes=jpeg_size)
             print(
-                f"[OK] node={node_id} seq={sequence} temp={temperature_c:.2f}C "
+                f"[OK] node={node_id} seq={sequence} kind={kind} temp={temperature_c:.2f}C "
                 f"jpeg={jpeg_size}B saved={archive_jpg}"
             )
 
