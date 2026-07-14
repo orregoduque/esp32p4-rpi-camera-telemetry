@@ -133,8 +133,8 @@ static esp_err_t camera_pipeline_init(void)
     };
     ESP_RETURN_ON_ERROR(esp_isp_new_processor(&isp_config, &s_cam.isp), TAG, "isp");
     esp_isp_color_config_t color_config = {
-        .color_contrast = { .integer = 1, .decimal = 0 },
-        .color_saturation = { .integer = 1, .decimal = 0 },
+        .color_contrast = { .integer = 1, .decimal = RPI_ISP_CONTRAST_DECIMAL },
+        .color_saturation = { .integer = 1, .decimal = RPI_ISP_SATURATION_DECIMAL },
         .color_hue = 0,
         .color_brightness = RPI_ISP_BRIGHTNESS,
     };

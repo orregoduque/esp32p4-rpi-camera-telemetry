@@ -31,8 +31,10 @@
 /** Let the sensor/ISP settle before the first snapshot (AE needs a few frames) */
 #define RPI_CAM_WARMUP_SEC               8
 
-/** ISP brightness boost (-128..127, 0 = neutral) */
-#define RPI_ISP_BRIGHTNESS               80
+/** ISP image tuning. Fractional values use decimal / 128. */
+#define RPI_ISP_CONTRAST_DECIMAL         40  /* 1.31x */
+#define RPI_ISP_SATURATION_DECIMAL       72  /* 1.56x */
+#define RPI_ISP_BRIGHTNESS               0   /* neutral; avoids grey haze */
 
 /** Direct-cable Ethernet (disable static IP if you use DHCP on a switch) */
 #ifndef CONFIG_RPI_ETH_USE_STATIC_IP
